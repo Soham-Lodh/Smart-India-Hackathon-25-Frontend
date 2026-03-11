@@ -11,11 +11,17 @@ export default function Layout({ children }) {
     <SidebarProvider>
       <div className="flex min-h-screen w-screen">
         {!isLoginPage && <AdminSidebar />}
-        <div className="flex flex-col h-full w-full">
+
+        <div className="flex flex-col flex-1 w-full">
           {!isLoginPage && <MemberTopNavbar />}
-          <main className="bg-[#fbf8f3] w-full overflow-clip">{children}</main>
+
+          <main className="bg-[#fbf8f3] flex-1 overflow-y-auto">
+            {children}
+          </main>
         </div>
       </div>
     </SidebarProvider>
   );
 }
+
+

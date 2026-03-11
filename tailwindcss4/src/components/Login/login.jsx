@@ -8,71 +8,88 @@ export default function FormPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // you can also validate or save data here
     navigate("/dashboard");
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#166700] via-[#166700]/60 to-yellow-200/35 px-4 sm:px-6 lg:px-8">
-        <div className="bg-[#fbf9f1] text-[#3D3436] py-1.5 flex items-center justify-between border-b border-gray-400 w-full h-16 flex-shrink-0 fixed top-0 right-0 z-50">
-			<h1
-				className="font-madimi
-          font-normal
-          text-[32px]
-          leading-[100%]
-          tracking-[0%]
-          ml-6 mb-3"
-			>
-				AgriScan
-			</h1>
-		</div>
-        <div className=" bg-[#fbf8f3] shadow-lg rounded-2xl p-6 sm:p-8 w-full max-w-sm sm:max-w-md md:max-w-lg border border-green-200">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-black text-center mb-6">
-            Login
-            </h1>
+    <div className="min-h-screen flex">
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+      {/* LEFT BRAND PANEL */}
+      <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-[#166700] to-[#0f4d00] text-white flex-col justify-center px-16">
+        <h1 className="text-4xl font-bold mb-6">
+          AgriScan
+        </h1>
+        <p className="text-lg leading-relaxed text-green-100">
+          Smart cattle identification and agricultural insights
+          powered by AI. Track growth, improve profit, and manage
+          livestock with confidence.
+        </p>
+
+        <div className="mt-10 space-y-3 text-green-200 text-sm">
+          <p>✔ AI Breed Identification</p>
+          <p>✔ Economic Growth Analytics</p>
+          <p>✔ Farmer Profit Tracking</p>
+        </div>
+      </div>
+
+      {/* RIGHT LOGIN PANEL */}
+      <div className="w-full md:w-1/2 bg-[#fcf8ee] flex items-center justify-center px-6">
+        <div className="w-full max-w-md bg-white p-10 rounded-2xl shadow-xl border border-gray-200">
+
+          <div className="text-center mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
+              Welcome Back
+            </h2>
+            <p className="text-gray-500 text-sm mt-2">
+              Login to access your dashboard
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+
             {/* Username */}
             <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">
+              <label className="block text-sm font-medium text-gray-600 mb-2">
                 Username
-                </label>
-                <input
+              </label>
+              <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                className="w-full px-3 sm:px-4 py-2 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[#166700] focus:border-[#166700]"
                 placeholder="Enter your username"
-                />
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#166700] focus:border-[#166700] transition"
+              />
             </div>
 
             {/* Email */}
             <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">
-                Email ID
-                </label>
-                <input
+              <label className="block text-sm font-medium text-gray-600 mb-2">
+                Email Address
+              </label>
+              <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-3 sm:px-4 py-2 border rounded-lg text-sm sm:text-base 
-             focus:outline-none focus:ring-2 focus:ring-[#166700] focus:border-[#166700]"
                 placeholder="Enter your email"
-                />
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#166700] focus:border-[#166700] transition"
+              />
             </div>
 
             {/* Button */}
             <button
-                type="submit"
-                className="w-full bg-black text-white py-2 sm:py-3 rounded-lg font-semibold text-sm sm:text-base shadow-md transition duration-200 
-                hover:shadow-lg hover:shadow-black/40 hover:scale-[1.02]"
+              type="submit"
+              className="w-full bg-[#166700] text-white py-3 rounded-xl font-semibold shadow-md transition-all duration-200 hover:bg-[#145c00] hover:shadow-lg hover:scale-[1.02]"
             >
-                Get Started
+              Get Started
             </button>
-            </form>
+
+          </form>
+
         </div>
+      </div>
+
     </div>
   );
 }

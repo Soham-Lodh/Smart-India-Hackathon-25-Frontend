@@ -25,8 +25,8 @@ export default function App() {
 					<Route path="/dashboard/dashboardPage" element={<DashboardCards />} />
 					<Route path="/dashboard/economic" element={<EconomicPage />} />
 					<Route path="/dashboard/history" element={<HistoryPage />} />
-					<Route path="/dashboard/profile" element={<ProfilePage />} />
-					<Route path="/dashboard/settings" element={<SettingsPage />} />
+					<Route path="/admin/requests" element={<ProfilePage />} />
+					<Route path="/admin/settings" element={<SettingsPage />} />
 					<Route path="/dashboard/upload" element={<UploadPage />} />
 					<Route path="/dashboard/voice" element={<VoicePage />} />
 					<Route path="/dashboard/ai" element={<AiChatAssistant />} />
