@@ -1,14 +1,28 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { api, storeUser } from "../../lib/api";
 
 export default function FormPage() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate("/dashboard");
+    setError("");
+    setLoading(true);
+
+    try {
+      const { user } = await api.login({ username, email });
+      storeUser(user);
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -46,6 +60,11 @@ export default function FormPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {error}
+              </div>
+            )}
 
             {/* Username */}
             <div>
@@ -80,9 +99,10 @@ export default function FormPage() {
             {/* Button */}
             <button
               type="submit"
+              disabled={loading}
               className="w-full bg-[#166700] text-white py-3 rounded-xl font-semibold shadow-md transition-all duration-200 hover:bg-[#145c00] hover:shadow-lg hover:scale-[1.02]"
             >
-              Get Started
+              {loading ? "Signing in..." : "Get Started"}
             </button>
 
           </form>

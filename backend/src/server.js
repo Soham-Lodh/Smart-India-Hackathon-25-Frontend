@@ -1,0 +1,51 @@
+import "./config/env.js";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import express from "express";
+import { connectDb } from "./config/db.js";
+import aiRoutes from "./routes/ai.js";
+import authRoutes from "./routes/auth.js";
+import dashboardRoutes from "./routes/dashboard.js";
+import historyRoutes from "./routes/history.js";
+import scanRoutes from "./routes/scans.js";
+import userRoutes from "./routes/users.js";
+const app = express();
+const port = process.env.PORT || 5000;
+
+app.use(
+  cors({
+    origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+    credentials: true,
+  })
+);
+app.use(cookieParser());
+app.use(express.json({ limit: "2mb" }));
+
+app.get("/api/health", (_req, res) => {
+  res.json({ ok: true });
+});
+
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/scans", scanRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/ai", aiRoutes);
+app.use("/api/history", historyRoutes);
+
+app.use((err, _req, res, _next) => {
+  console.error(err);
+  res.status(err.status || 500).json({
+    message: err.message || "Something went wrong",
+  });
+});
+
+connectDb()
+  .then(() => {
+    app.listen(port, () => {
+      console.log(`AgriScan backend running on port ${port}`);
+    });
+  })
+  .catch((error) => {
+    console.error("Database connection failed", error);
+    process.exit(1);
+  });

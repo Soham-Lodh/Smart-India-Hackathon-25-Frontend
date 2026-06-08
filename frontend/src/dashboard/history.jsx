@@ -7,51 +7,65 @@ import {
   Mic,
   MessageSquare,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { api } from "../lib/api";
 
 export default function History() {
+  const [history, setHistory] = useState({
+    stats: { totalActivities: 0, identifications: 0, voiceQueries: 0, chatMessages: 0 },
+    activities: [],
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api
+      .getHistory()
+      .then(setHistory)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
   const stats = [
-    { title: "Total Activities", value: 5, subtitle: "All time" },
-    { title: "Breed Identifications", value: 2, subtitle: "Successful scans" },
-    { title: "Voice Queries", value: 1, subtitle: "Voice interactions" },
-    { title: "Chat Messages", value: 1, subtitle: "Text conversations" },
+    { title: "Total Activities", value: loading ? "..." : history.stats.totalActivities, subtitle: "All time" },
+    { title: "Breed Identifications", value: loading ? "..." : history.stats.identifications, subtitle: "Successful scans" },
+    { title: "Voice Queries", value: loading ? "..." : history.stats.voiceQueries, subtitle: "Voice interactions" },
+    { title: "Chat Messages", value: loading ? "..." : history.stats.chatMessages, subtitle: "Text conversations" },
   ];
 
-  const logs = [
-    {
-      type: "identification",
-      icon: Activity,
-      iconBg: "bg-green-100 text-green-600",
-      title: "Gir Cow Identified",
-      desc: "Breed identification completed with high confidence",
-      tags: [
-        { label: "Identification", color: "bg-gray-200 text-gray-800" },
-        { label: "Gir", color: "bg-green-200 text-green-700" },
-        { label: "94% confidence", color: "bg-green-600 text-white" },
-      ],
-      time: "17/09/2025, 21:32",
-    },
-    {
-      type: "voice",
-      icon: Mic,
-      iconBg: "bg-blue-100 text-blue-600",
-      title: "Voice Query: Holstein Care",
-      desc: "Asked about Holstein cattle vaccination schedule",
-      tags: [
-        { label: "Voice", color: "bg-gray-200 text-gray-800" },
-        { label: "Holstein", color: "bg-blue-200 text-blue-700" },
-      ],
-      time: "17/09/2025, 19:32",
-    },
-    {
-      type: "chat",
-      icon: MessageSquare,
-      iconBg: "bg-purple-100 text-purple-600",
-      title: "Chat: Market Prices",
-      desc: "Inquired about current cattle market prices",
-      tags: [{ label: "Chat", color: "bg-gray-200 text-gray-800" }],
-      time: "17/09/2025, 17:32",
-    },
-  ];
+  const logs = history.activities.map((activity) => {
+    const isChat = activity.type === "chat";
+    const isLogin = activity.type === "login";
+    const Icon = isChat ? MessageSquare : isLogin ? Mic : Activity;
+    const iconBg = isChat
+      ? "bg-purple-100 text-purple-600"
+      : isLogin
+        ? "bg-blue-100 text-blue-600"
+        : "bg-green-100 text-green-600";
+
+    const tags = [
+      { label: activity.type, color: "bg-gray-200 text-gray-800" },
+    ];
+
+    if (activity.metadata?.prediction) {
+      tags.push({ label: activity.metadata.prediction, color: "bg-green-200 text-green-700" });
+    }
+
+    if (activity.metadata?.confidence !== undefined) {
+      tags.push({
+        label: `${activity.metadata.confidence}% confidence`,
+        color: "bg-green-600 text-white",
+      });
+    }
+
+    return {
+      icon: Icon,
+      iconBg,
+      title: activity.title,
+      desc: activity.description,
+      tags,
+      time: new Date(activity.createdAt).toLocaleString(),
+    };
+  });
 
   return (
     <div className="bg-[#fcf8ee] min-h-screen px-8 py-6">
@@ -67,10 +81,13 @@ export default function History() {
           </p>
         </div>
 
-        <button className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg text-sm font-medium hover:bg-green-800 transition">
+        <a
+          href={api.exportHistoryUrl()}
+          className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg text-sm font-medium hover:bg-green-800 transition"
+        >
           <Download size={16} />
           Export
-        </button>
+        </a>
       </div>
 
       {/* Stats */}
@@ -95,6 +112,12 @@ export default function History() {
 
       {/* Logs */}
       <div className="space-y-4">
+        {logs.length === 0 && (
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-6 py-4 text-sm text-gray-500">
+            No history yet. Your uploads, confirmations, and AI chats will appear here.
+          </div>
+        )}
+
         {logs.map((log, i) => {
           const Icon = log.icon;
 

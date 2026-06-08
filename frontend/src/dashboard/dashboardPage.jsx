@@ -8,16 +8,31 @@ import {
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { api } from "../lib/api";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [dashboard, setDashboard] = useState({
+    stats: { totalScans: 0, correctScans: 0, accuracy: 0, monthlyScans: 0 },
+    recentActivities: [],
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api
+      .getDashboard()
+      .then(setDashboard)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   const stats = [
     {
       title: "Total Cattle Identified",
-      value: "1,247",
-      change: "+12% from last month",
+      value: loading ? "..." : dashboard.stats.totalScans,
+      change: "All time",
       changeColor: "text-green-500",
       icon: <SettingsIcon size={18} />,
     },
@@ -30,17 +45,17 @@ export default function Dashboard() {
     },
     {
       title: "Accuracy Rate",
-      value: "94.8%",
-      change: "+2.1% from last month",
+      value: loading ? "..." : `${dashboard.stats.accuracy}%`,
+      change: `${dashboard.stats.correctScans} correct predictions`,
       changeColor: "text-green-500",
       icon: <TrendingUp size={18} />,
     },
     {
       title: "Monthly Scans",
-      value: "156",
-      change: "-3% from last month",
-      changeColor: "text-red-500",
-      icon: <TrendingDown size={18} />,
+      value: loading ? "..." : dashboard.stats.monthlyScans,
+      change: "This month",
+      changeColor: "text-green-500",
+      icon: <TrendingUp size={18} />,
     },
   ];
 
@@ -75,20 +90,12 @@ export default function Dashboard() {
     },
   ];
 
-  const activities = [
-    {
-      title: "Female Cow Identified",
-      tag: "identification",
-      description: "Breed identified with 96% confidence",
-      time: "2 hours ago",
-    },
-    {
-      title: "Voice Query Answered",
-      tag: "voice",
-      description: "Asked about vaccination schedule for Holstein",
-      time: "4 hours ago",
-    },
-  ];
+  const activities = dashboard.recentActivities.map((activity) => ({
+    title: activity.title,
+    tag: activity.type,
+    description: activity.description,
+    time: new Date(activity.createdAt).toLocaleString(),
+  }));
 
   return (
     <div className="bg-[#fcf8ee] min-h-screen px-8 py-6">
@@ -112,7 +119,7 @@ export default function Dashboard() {
 <section>
   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
     {stats.map((stat) => {
-      const isPositive = stat.change.includes("+");
+      const isPositive = !stat.change.includes("-");
 
       return (
         <div
@@ -201,6 +208,12 @@ export default function Dashboard() {
             </p>
 
             <ul className="space-y-4">
+              {activities.length === 0 && (
+                <li className="text-sm text-gray-500">
+                  No activity yet. Upload a cattle image to start.
+                </li>
+              )}
+
               {activities.map((activity) => (
                 <li key={activity.title} className="flex items-start space-x-3">
                   <div className="w-6 h-6 flex items-center justify-center bg-green-200 rounded-full text-green-700">

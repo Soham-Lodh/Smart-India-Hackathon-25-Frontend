@@ -1,14 +1,30 @@
 import { useState } from "react";
-import { Camera, Calendar } from "lucide-react";
+import { useEffect } from "react";
+import { Camera, Calendar, User2 } from "lucide-react";
+import { api } from "../lib/api";
 
 export default function Settings() {
   const [form, setForm] = useState({
-    name: "John Marpung",
-    email: "john@gmail.com",
-    phone: "(684) 555-0102",
-    dob: "1999/04/12",
-    country: "United States",
+    name: "",
+    email: "",
+    phone: "",
+    dob: "",
+    country: "",
+    avatarUrl: "",
   });
+
+  useEffect(() => {
+    api.getMe().then(({ user }) => {
+      setForm({
+        name: user.profile?.fullName || user.username || "",
+        email: user.email || "",
+        phone: user.profile?.phone || "",
+        dob: user.profile?.dob || "",
+        country: user.profile?.country || "",
+        avatarUrl: user.profile?.avatarUrl || "",
+      });
+    }).catch(() => {});
+  }, []);
 
   return (
     <div className="bg-[#f8f9fb] min-h-screen px-8 py-8">
@@ -24,10 +40,10 @@ export default function Settings() {
           </div>
 
           <div className="flex gap-3">
-            <button className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-100 transition">
+            <button disabled className="px-4 py-2 text-sm rounded-lg border border-gray-300 opacity-70">
               Cancel
             </button>
-            <button className="px-4 py-2 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700 transition">
+            <button disabled className="px-4 py-2 text-sm rounded-lg bg-green-600 text-white opacity-70">
               Save
             </button>
           </div>
@@ -37,14 +53,20 @@ export default function Settings() {
 
           {/* Profile Photo */}
           <div className="flex items-center gap-6">
-            <img
-              src="https://i.pravatar.cc/100"
-              alt="profile"
-              className="w-16 h-16 rounded-full object-cover"
-            />
+            <div className="w-16 h-16 rounded-full bg-[#f3f1ea] flex items-center justify-center overflow-hidden">
+              {form.avatarUrl ? (
+                <img
+                  src={form.avatarUrl}
+                  alt="profile"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User2 size={28} className="text-gray-500" />
+              )}
+            </div>
 
             <div>
-              <button className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 transition">
+              <button disabled className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-lg opacity-70">
                 <Camera size={16} />
                 Upload Image
               </button>
@@ -62,6 +84,7 @@ export default function Settings() {
             <input
               type="text"
               value={form.name}
+              readOnly
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-600"
             />
           </div>
@@ -74,6 +97,7 @@ export default function Settings() {
             <input
               type="email"
               value={form.email}
+              readOnly
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-600"
             />
           </div>
@@ -84,7 +108,7 @@ export default function Settings() {
               Phone number
             </label>
             <div className="flex gap-2">
-              <select className="border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none">
+              <select disabled className="border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none">
                 <option>+1</option>
                 <option>+91</option>
                 <option>+44</option>
@@ -93,6 +117,7 @@ export default function Settings() {
               <input
                 type="text"
                 value={form.phone}
+                readOnly
                 className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-600"
               />
             </div>
@@ -105,8 +130,9 @@ export default function Settings() {
             </label>
             <div className="relative">
               <input
-                type="text"
+                type="date"
                 value={form.dob}
+                readOnly
                 className="w-full border border-gray-300 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-green-600"
               />
               <Calendar
@@ -121,7 +147,12 @@ export default function Settings() {
             <label className="block text-sm font-medium mb-2">
               Country
             </label>
-            <select className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-600">
+            <select
+              value={form.country}
+              disabled
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-600"
+            >
+              <option value="">{form.country || "Empty"}</option>
               <option>United States</option>
               <option>India</option>
               <option>United Kingdom</option>

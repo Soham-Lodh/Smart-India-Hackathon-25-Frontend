@@ -1,6 +1,18 @@
 import { MessageCircle, Bell, SunMedium, Globe, User2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { getStoredUser } from "../../lib/api";
 
 const MemberTopNavbar = () => {
+  const [user, setUser] = useState(getStoredUser());
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleUpdate = () => setUser(getStoredUser());
+    window.addEventListener("agriscan-user-updated", handleUpdate);
+    return () => window.removeEventListener("agriscan-user-updated", handleUpdate);
+  }, []);
+
   return (
     <div className="flex flex-col w-full">
       {/* Top green news bar */}
@@ -26,7 +38,7 @@ const MemberTopNavbar = () => {
 
         {/* Center Greeting */}
         <div className="text-[20px] text-[#8b7f81]">
-          Hello, राज कुमार
+          Hello, {user?.username || "User"}
         </div>
 
         {/* Right Section */}
@@ -60,9 +72,13 @@ const MemberTopNavbar = () => {
           </div>
 
           {/* Profile */}
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f3f1ea]">
+          <button
+            type="button"
+            onClick={() => navigate("/admin/requests")}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f3f1ea]"
+          >
             <User2 className="h-5 w-5 text-[#3D3436]" />
-          </div>
+          </button>
         </div>
       </div>
     </div>
