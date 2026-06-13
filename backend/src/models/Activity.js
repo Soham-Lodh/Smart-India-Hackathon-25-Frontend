@@ -5,7 +5,7 @@ const activitySchema = new mongoose.Schema(
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     type: {
       type: String,
-      enum: ["login", "identification", "confirmation", "chat", "voice", "profile"],
+      enum: ["signup", "login", "identification", "confirmation", "chat", "voice", "profile"],
       required: true,
     },
     title: { type: String, required: true },

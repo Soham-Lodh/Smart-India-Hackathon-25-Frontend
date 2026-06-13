@@ -11,18 +11,20 @@ router.get("/", requireUser, async (req, res, next) => {
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    const [totalScans, correctScans, monthlyScans, recentActivities] = await Promise.all([
-      Scan.countDocuments({ user: req.user._id }),
-      Scan.countDocuments({ user: req.user._id, status: "correct" }),
-      Scan.countDocuments({ user: req.user._id, createdAt: { $gte: startOfMonth } }),
+    const [totalScans, confirmedScans, correctScans, monthlyScans, recentActivities] = await Promise.all([
+      Scan.countDocuments({}),
+      Scan.countDocuments({ userConfirmed: true }),
+      Scan.countDocuments({ status: "correct" }),
+      Scan.countDocuments({ createdAt: { $gte: startOfMonth } }),
       Activity.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(5),
     ]);
 
-    const accuracy = totalScans ? Math.round((correctScans / totalScans) * 1000) / 10 : 0;
+    const accuracy = confirmedScans ? Math.round((correctScans / confirmedScans) * 1000) / 10 : 0;
 
     res.json({
       stats: {
         totalScans,
+        confirmedScans,
         correctScans,
         accuracy,
         monthlyScans,

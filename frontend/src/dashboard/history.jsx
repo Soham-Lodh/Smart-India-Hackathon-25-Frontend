@@ -8,6 +8,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import MarkdownMessage from "../components/ui/markdown-message";
 import { api } from "../lib/api";
 
 export default function History() {
@@ -64,6 +65,7 @@ export default function History() {
       desc: activity.description,
       tags,
       time: new Date(activity.createdAt).toLocaleString(),
+      result: activity.result,
     };
   });
 
@@ -159,22 +161,41 @@ export default function History() {
                     <div className="text-xs text-gray-400 mt-2">
                       {log.time}
                     </div>
+
+                    {log.result?.message && (
+                      <div className="mt-3 rounded-lg border border-gray-200 bg-[#fbf8f3] p-3">
+                        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                          AI Result
+                        </div>
+                        <div className="mb-2 rounded-md bg-white px-3 py-2 text-sm text-gray-700">
+                          {log.result.message.question}
+                        </div>
+                        <MarkdownMessage content={log.result.message.answer} />
+                      </div>
+                    )}
+
+                    {log.result?.scan && (
+                      <div className="mt-3 flex flex-col gap-3 rounded-lg border border-gray-200 bg-[#fbf8f3] p-3 sm:flex-row">
+                        <img
+                          src={log.result.scan.imageUrl}
+                          alt={log.result.scan.prediction}
+                          className="h-20 w-20 rounded-lg border object-cover"
+                        />
+                        <div className="text-sm text-gray-700">
+                          <div className="font-semibold text-gray-900">
+                            {log.result.scan.prediction}
+                          </div>
+                          <div>{log.result.scan.confidence}% confidence</div>
+                          {log.result.scan.explanation && (
+                            <div className="mt-1 text-xs text-gray-500">
+                              {log.result.scan.explanation}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                {/* Actions */}
-                <div className="flex gap-2">
-                  <button className="p-2 rounded-md bg-blue-100 text-blue-600 hover:bg-blue-200 transition">
-                    <Eye size={16} />
-                  </button>
-                  <button className="p-2 rounded-md bg-green-100 text-green-600 hover:bg-green-200 transition">
-                    <ArrowBigDownDash size={16} />
-                  </button>
-                  <button className="p-2 rounded-md bg-red-100 text-red-600 hover:bg-red-200 transition">
-                    <Trash size={16} />
-                  </button>
-                </div>
-
               </div>
             </div>
           );

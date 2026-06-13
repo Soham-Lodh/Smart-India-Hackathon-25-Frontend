@@ -16,6 +16,51 @@ router.get("/", requireUser, async (req, res, next) => {
       ChatMessage.countDocuments({ user: req.user._id }),
     ]);
 
+    const messageIds = activities
+      .map((activity) => activity.metadata?.messageId)
+      .filter(Boolean);
+    const scanIds = activities
+      .map((activity) => activity.metadata?.scanId)
+      .filter(Boolean);
+
+    const [messages, scans] = await Promise.all([
+      ChatMessage.find({ _id: { $in: messageIds }, user: req.user._id }),
+      Scan.find({ _id: { $in: scanIds }, user: req.user._id }),
+    ]);
+
+    const messagesById = new Map(messages.map((message) => [message._id.toString(), message]));
+    const scansById = new Map(scans.map((scan) => [scan._id.toString(), scan]));
+    const enrichedActivities = activities.map((activity) => {
+      const item = activity.toObject();
+      const message = item.metadata?.messageId
+        ? messagesById.get(item.metadata.messageId.toString())
+        : null;
+      const scan = item.metadata?.scanId
+        ? scansById.get(item.metadata.scanId.toString())
+        : null;
+
+      return {
+        ...item,
+        result: {
+          message: message
+            ? {
+                question: message.question,
+                answer: message.answer,
+              }
+            : null,
+          scan: scan
+            ? {
+                imageUrl: scan.imageUrl,
+                prediction: scan.prediction,
+                confidence: scan.confidence,
+                explanation: scan.explanation,
+                status: scan.status,
+              }
+            : null,
+        },
+      };
+    });
+
     res.json({
       stats: {
         totalActivities,
@@ -23,7 +68,7 @@ router.get("/", requireUser, async (req, res, next) => {
         voiceQueries,
         chatMessages,
       },
-      activities,
+      activities: enrichedActivities,
     });
   } catch (error) {
     next(error);

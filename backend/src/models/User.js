@@ -36,9 +36,28 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       unique: true,
     },
+    passwordHash: {
+      type: String,
+      required: true,
+      select: false,
+    },
     profile: { type: profileSchema, default: () => ({}) },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(_doc, ret) {
+        delete ret.passwordHash;
+        return ret;
+      },
+    },
+    toObject: {
+      transform(_doc, ret) {
+        delete ret.passwordHash;
+        return ret;
+      },
+    },
+  }
 );
 
 export default mongoose.model("User", userSchema);

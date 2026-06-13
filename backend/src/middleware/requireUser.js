@@ -1,7 +1,7 @@
 import User from "../models/User.js";
-import { cookieName, verifyAuthToken } from "../services/auth.js";
+import { clearAuthCookie, cookieName, verifyAuthToken } from "../services/auth.js";
 
-export async function requireUser(req, _res, next) {
+export async function requireUser(req, res, next) {
   try {
     const token = req.cookies?.[cookieName];
 
@@ -23,6 +23,7 @@ export async function requireUser(req, _res, next) {
     req.user = user;
     next();
   } catch (error) {
+    clearAuthCookie(res);
     next(error);
   }
 }

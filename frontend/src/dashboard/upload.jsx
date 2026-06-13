@@ -1,28 +1,82 @@
 import { Clock, Upload, Camera, FolderUp, Search } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
+import { useToast } from "../components/ui/toast";
+import { getScanState, setScanState, subscribeScanState } from "../lib/tool-state";
 
 export default function IdentifyBreed() {
   const fileInputRef = useRef(null);
+  const { showToast } = useToast();
   const [preview, setPreview] = useState("");
   const [scan, setScan] = useState(null);
   const [loading, setLoading] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    const syncScanState = () => {
+      const state = getScanState();
+      setPreview(state.preview);
+      setScan(state.scan);
+      setLoading(state.loading);
+      setError(state.error);
+    };
+
+    const unsubscribe = subscribeScanState(syncScanState);
+    syncScanState();
+    return unsubscribe;
+  }, []);
+
   const handleFile = async (file) => {
     if (!file) return;
 
     setError("");
     setScan(null);
-    setPreview(URL.createObjectURL(file));
+    const nextPreview = URL.createObjectURL(file);
+    setPreview(nextPreview);
     setLoading(true);
+    setScanState({
+      preview: nextPreview,
+      scan: null,
+      loading: true,
+      error: "",
+    });
+    const toastId = showToast({
+      type: "loading",
+      title: "Identifying cattle breed",
+      description: "Your image is being processed. You can continue using the dashboard.",
+      duration: 0,
+    });
 
     try {
       const { scan: createdScan } = await api.uploadScan(file);
       setScan(createdScan);
+      setScanState({
+        preview: createdScan.imageUrl,
+        scan: createdScan,
+        loading: false,
+        error: "",
+      });
+      showToast({
+        id: toastId,
+        type: "success",
+        title: "Identification complete",
+        description: `${createdScan.prediction} detected with ${createdScan.confidence}% confidence.`,
+      });
     } catch (err) {
       setError(err.message);
+      setScanState({
+        preview: nextPreview,
+        scan: null,
+        loading: false,
+        error: err.message,
+      });
+      showToast({
+        id: toastId,
+        type: "error",
+        title: "Identification failed",
+        description: err.message,
+      });
     } finally {
       setLoading(false);
     }
@@ -36,8 +90,23 @@ export default function IdentifyBreed() {
     try {
       const { scan: updatedScan } = await api.confirmScan(scan._id, isCorrect);
       setScan(updatedScan);
+      setScanState({
+        scan: updatedScan,
+        loading: false,
+        error: "",
+      });
+      showToast({
+        type: "success",
+        title: "Feedback saved",
+        description: `Prediction marked ${updatedScan.status}.`,
+      });
     } catch (err) {
       setError(err.message);
+      showToast({
+        type: "error",
+        title: "Feedback failed",
+        description: err.message,
+      });
     } finally {
       setConfirming(false);
     }

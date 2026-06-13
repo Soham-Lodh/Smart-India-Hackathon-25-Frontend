@@ -1,6 +1,7 @@
 import {
   AlertCircle,
   Bot,
+  CircleDot,
   LoaderCircle,
   Mic,
   MicOff,
@@ -9,6 +10,8 @@ import {
   Volume2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import MarkdownMessage from "../components/ui/markdown-message";
+import { useToast } from "../components/ui/toast";
 import { api } from "../lib/api";
 
 export default function VoiceAssistant() {
@@ -20,6 +23,7 @@ export default function VoiceAssistant() {
   const [reply, setReply] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { showToast } = useToast();
 
   const quickCommands = [
     "What is Gir cow milk yield?",
@@ -136,13 +140,31 @@ export default function VoiceAssistant() {
     setError("");
     setLoading(true);
     setReply("");
+    const toastId = showToast({
+      type: "loading",
+      title: "Voice question sent",
+      description: "The AI is preparing a text reply. You can keep using the dashboard.",
+      duration: 0,
+    });
 
     try {
       const { message } = await api.askVoice(question);
       setReply(message.answer);
       setTranscript(message.question);
+      showToast({
+        id: toastId,
+        type: "success",
+        title: "Voice answer ready",
+        description: "The AI reply is available in the voice assistant panel.",
+      });
     } catch (err) {
       setError(err.message);
+      showToast({
+        id: toastId,
+        type: "error",
+        title: "Voice request failed",
+        description: err.message,
+      });
     } finally {
       setLoading(false);
     }
@@ -151,20 +173,26 @@ export default function VoiceAssistant() {
   const visibleTranscript = [transcript, interimTranscript].filter(Boolean).join(" ");
 
   return (
-    <div className="bg-[#fcf8ee] min-h-screen px-8 py-6">
-      <div className="mb-6 flex items-start justify-between gap-4">
+    <div className="bg-[#fcf8ee] min-h-screen px-4 md:px-8 py-6">
+      <div className="mb-6 flex flex-col xl:flex-row xl:items-end xl:justify-between gap-4">
         <div>
-          <h1 className="!text-xl md:!text-3xl font-bold mb-4">
+          <h1 className="!text-xl md:!text-3xl font-bold mb-3">
             Voice Assistant
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 max-w-2xl">
             Speak in English, convert your voice to text, and get a text answer from AI.
           </p>
         </div>
 
-        <div className="hidden sm:flex items-center gap-2 rounded-full bg-white border border-gray-200 px-4 py-2 text-sm text-green-700 shadow-sm">
-          <Volume2 size={16} />
-          English voice only
+        <div className="grid grid-cols-2 sm:flex gap-2">
+          <div className="flex items-center gap-2 rounded-lg bg-white border border-gray-200 px-3 py-2 text-sm text-green-700 shadow-sm">
+            <Volume2 size={16} />
+            English voice
+          </div>
+          <div className="flex items-center gap-2 rounded-lg bg-white border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm">
+            <CircleDot size={16} className={isListening ? "text-red-600" : "text-gray-400"} />
+            {isListening ? "Recording" : "Ready"}
+          </div>
         </div>
       </div>
 
@@ -213,7 +241,7 @@ export default function VoiceAssistant() {
               </div>
             )}
 
-            <div className="rounded-xl border border-gray-200 bg-[#fbf8f3] px-5 py-5 min-h-44">
+            <div className="rounded-xl border border-gray-200 bg-[#fbf8f3] px-5 py-5 min-h-44 shadow-inner">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-semibold text-gray-800">
                   Recognized text
@@ -289,7 +317,7 @@ export default function VoiceAssistant() {
               </button>
             </div>
 
-            <div className="mt-6 rounded-xl border border-gray-200 bg-white px-5 py-5">
+            <div className="mt-6 rounded-xl border border-gray-200 bg-white px-5 py-5 shadow-sm">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center">
                   <Bot size={16} />
@@ -303,7 +331,7 @@ export default function VoiceAssistant() {
                   Preparing an answer from OpenRouter...
                 </div>
               ) : reply ? (
-                <p className="text-sm text-gray-800 whitespace-pre-wrap">{reply}</p>
+                <MarkdownMessage content={reply} />
               ) : (
                 <p className="text-sm text-gray-500">
                   Your answer will appear here after you send the recognized text.
@@ -341,6 +369,10 @@ export default function VoiceAssistant() {
 
           <div className="text-xs mt-4 text-gray-400">
             Voice recognition language is fixed to English (en-US).
+          </div>
+
+          <div className="mt-5 rounded-lg border border-gray-200 bg-[#fbf8f3] px-4 py-4 text-sm text-gray-700">
+            Speak naturally, review the transcript, then send it. Only the final text goes to the backend.
           </div>
         </div>
       </div>

@@ -3,13 +3,23 @@ import {
   ThumbsUp,
   ThumbsDown,
   Copy,
+  Leaf,
   Send,
   LoaderCircle,
   Sparkles,
   User2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import MarkdownMessage from "../components/ui/markdown-message";
+import { useToast } from "../components/ui/toast";
 import { api } from "../lib/api";
+import {
+  addPendingAiMessage,
+  completePendingAiMessage,
+  getAiState,
+  removePendingAiMessage,
+  subscribeAiState,
+} from "../lib/tool-state";
 
 export default function AiChatAssistant() {
   const messagesEndRef = useRef(null);
@@ -17,19 +27,44 @@ export default function AiChatAssistant() {
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { showToast } = useToast();
 
   const suggestions = [
     "Cattle vaccination schedule",
     "Best feed for milk cows",
     "Disease symptoms",
-    "Market prices today",
+    "Signs of heat stress",
   ];
 
   useEffect(() => {
+    const syncPending = () => {
+      const state = getAiState();
+      setLoading(state.pendingMessages.length > 0);
+      setMessages((current) => {
+        const completed = mergeMessages(
+          current.filter((message) => !message.pending),
+          state.completedMessages
+        );
+        return [...completed, ...state.pendingMessages];
+      });
+    };
+
+    const unsubscribe = subscribeAiState(syncPending);
+    syncPending();
+
     api
       .getAiMessages()
-      .then(({ messages }) => setMessages(messages))
+      .then(({ messages }) => {
+        const state = getAiState();
+        setMessages([
+          ...mergeMessages(messages, state.completedMessages),
+          ...state.pendingMessages,
+        ]);
+        setLoading(state.pendingMessages.length > 0);
+      })
       .catch(() => {});
+
+    return unsubscribe;
   }, []);
 
   useEffect(() => {
@@ -43,6 +78,12 @@ export default function AiChatAssistant() {
     setError("");
     setLoading(true);
     setQuestion("");
+    const toastId = showToast({
+      type: "loading",
+      title: "AI is preparing an answer",
+      description: "Your question is being processed. You can continue using the site.",
+      duration: 0,
+    });
 
     const pendingMessage = {
       _id: `pending-${Date.now()}`,
@@ -51,6 +92,7 @@ export default function AiChatAssistant() {
       pending: true,
     };
 
+    addPendingAiMessage(pendingMessage);
     setMessages((current) => [...current, pendingMessage]);
 
     try {
@@ -58,38 +100,58 @@ export default function AiChatAssistant() {
       setMessages((current) =>
         current.map((item) => (item._id === pendingMessage._id ? message : item))
       );
+      completePendingAiMessage(pendingMessage._id, message);
+      showToast({
+        id: toastId,
+        type: "success",
+        title: "AI answer ready",
+        description: "Your assistant response has been added to the chat.",
+      });
     } catch (err) {
+      removePendingAiMessage(pendingMessage._id);
       setError(err.message);
       setMessages((current) =>
         current.filter((item) => item._id !== pendingMessage._id)
       );
       setQuestion(trimmed);
+      showToast({
+        id: toastId,
+        type: "error",
+        title: "AI request failed",
+        description: err.message,
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-[#fcf8ee] min-h-screen px-8 py-6">
+    <div className="bg-[#fcf8ee] min-h-screen px-4 md:px-8 py-6">
 
-      <div className="mb-6 flex items-start justify-between gap-4">
+      <div className="mb-6 flex flex-col xl:flex-row xl:items-end xl:justify-between gap-4">
         <div>
-          <h1 className="!text-xl md:!text-3xl font-bold mb-4">
+          <h1 className="!text-xl md:!text-3xl font-bold mb-3">
             AI Chat Assistant
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 max-w-2xl">
             Ask questions about cattle care, breeding, health, and market insights.
           </p>
         </div>
 
-        <div className="hidden sm:flex items-center gap-2 rounded-full bg-white border border-gray-200 px-4 py-2 text-sm text-green-700 shadow-sm">
-          <Sparkles size={16} />
-          OpenRouter AI
+        <div className="grid grid-cols-2 sm:flex gap-2">
+          <div className="flex items-center gap-2 rounded-lg bg-white border border-gray-200 px-3 py-2 text-sm text-green-700 shadow-sm">
+            <Sparkles size={16} />
+            OpenRouter AI
+          </div>
+          <div className="flex items-center gap-2 rounded-lg bg-white border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm">
+            <Leaf size={16} className="text-green-700" />
+            Farm focused
+          </div>
         </div>
       </div>
 
-      {/* Chat Card */}
-      <div className="max-w-4xl bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="max-w-6xl grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px] gap-5">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
 
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -106,8 +168,7 @@ export default function AiChatAssistant() {
           </span>
         </div>
 
-        <div className="bg-[#fbf8f3] px-6 py-5">
-          {/* Assistant Intro Message */}
+        <div className="bg-[#fbf8f3] px-4 md:px-6 py-5">
           <div className="flex items-start gap-3 mb-5">
             <div className="w-9 h-9 shrink-0 rounded-full bg-green-100 text-green-700 flex items-center justify-center">
               <Bot size={17} />
@@ -145,7 +206,7 @@ export default function AiChatAssistant() {
             </div>
           </div>
 
-          <div className="space-y-5 max-h-[460px] overflow-y-auto pr-1">
+          <div className="space-y-5 h-[48vh] min-h-80 max-h-[540px] overflow-y-auto pr-1">
             {messages.map((message) => (
               <div key={message._id} className="space-y-3">
                 <div className="flex justify-end gap-3">
@@ -174,8 +235,8 @@ export default function AiChatAssistant() {
                     <div className="w-9 h-9 shrink-0 rounded-full bg-green-100 text-green-700 flex items-center justify-center">
                       <Bot size={17} />
                     </div>
-                    <div className="bg-white rounded-xl rounded-tl-sm border border-gray-200 px-4 py-3 max-w-[85%] text-sm text-gray-800 whitespace-pre-wrap shadow-sm">
-                      {message.answer}
+                    <div className="bg-white rounded-xl rounded-tl-sm border border-gray-200 px-4 py-3 max-w-[85%] text-sm text-gray-800 shadow-sm">
+                      <MarkdownMessage content={message.answer} />
                       <div className="flex justify-end gap-3 mt-3 text-xs text-gray-400">
                         <button className="hover:text-green-600 transition">
                           <ThumbsUp size={14} />
@@ -212,9 +273,7 @@ export default function AiChatAssistant() {
           </div>
         )}
 
-        {/* Input Section */}
         <div className="border-t bg-white px-6 py-5">
-          {/* Suggestions */}
           <div className="flex flex-wrap gap-2 mb-4">
             {suggestions.map((s, idx) => (
               <button
@@ -238,7 +297,7 @@ export default function AiChatAssistant() {
                 if (e.key === "Enter") sendQuestion();
               }}
               className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 disabled:bg-gray-50"
-              placeholder="Ask about cattle care, breeding, health..."
+              placeholder="Ask about feeding, disease symptoms, breed care..."
             />
 
             <button
@@ -263,6 +322,43 @@ export default function AiChatAssistant() {
           )}
         </div>
       </div>
+      <aside className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 h-fit">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-9 h-9 rounded-lg bg-green-100 text-green-700 flex items-center justify-center">
+            <Bot size={17} />
+          </div>
+          <div>
+            <div className="font-semibold text-gray-900">Ask Better</div>
+            <div className="text-xs text-gray-500">Useful cattle prompts</div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {[
+            "Mention age, breed, symptoms, and feeding routine.",
+            "For health concerns, include temperature and behavior changes.",
+            "For economics, include location, herd size, and production goal.",
+          ].map((tip) => (
+            <div
+              key={tip}
+              className="rounded-lg border border-gray-200 bg-[#fbf8f3] px-3 py-3 text-sm text-gray-700"
+            >
+              {tip}
+            </div>
+          ))}
+        </div>
+      </aside>
+      </div>
     </div>
+  );
+}
+
+function mergeMessages(...groups) {
+  const byId = new Map();
+  groups.flat().forEach((message) => {
+    byId.set(message._id, message);
+  });
+  return [...byId.values()].sort(
+    (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0)
   );
 }

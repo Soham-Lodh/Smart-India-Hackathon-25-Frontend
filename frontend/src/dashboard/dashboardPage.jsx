@@ -32,7 +32,7 @@ export default function Dashboard() {
     {
       title: "Total Cattle Identified",
       value: loading ? "..." : dashboard.stats.totalScans,
-      change: "All time",
+      change: "Platform all time",
       changeColor: "text-green-500",
       icon: <SettingsIcon size={18} />,
     },
@@ -46,14 +46,14 @@ export default function Dashboard() {
     {
       title: "Accuracy Rate",
       value: loading ? "..." : `${dashboard.stats.accuracy}%`,
-      change: `${dashboard.stats.correctScans} correct predictions`,
+      change: `${dashboard.stats.correctScans} of ${dashboard.stats.confirmedScans || 0} confirmed`,
       changeColor: "text-green-500",
       icon: <TrendingUp size={18} />,
     },
     {
       title: "Monthly Scans",
       value: loading ? "..." : dashboard.stats.monthlyScans,
-      change: "This month",
+      change: "Platform this month",
       changeColor: "text-green-500",
       icon: <TrendingUp size={18} />,
     },
@@ -104,7 +104,7 @@ export default function Dashboard() {
       <div className="mb-6">
         <h1 className="!text-xl md:!text-3xl font-bold mb-4">Dashboard</h1>
         <p className="text-gray-600">
-          Welcome back! Here's what's happening with your cattle management today.
+          Welcome back! Here's the platform-wide identification activity and your latest actions.
         </p>
       </div>
 

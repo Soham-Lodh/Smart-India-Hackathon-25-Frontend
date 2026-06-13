@@ -35,6 +35,9 @@ async function request(path, options = {}) {
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
+    if (response.status === 401) {
+      clearStoredUser();
+    }
     throw new Error(data.message || "Request failed");
   }
 
@@ -42,6 +45,11 @@ async function request(path, options = {}) {
 }
 
 export const api = {
+  signup: (payload) =>
+    request("/auth/signup", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
   login: (payload) =>
     request("/auth/login", {
       method: "POST",
