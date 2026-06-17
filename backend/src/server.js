@@ -14,7 +14,7 @@ const port = process.env.PORT || 5000;
 
 app.use(
   cors({
-    origin: [`${process.env.CLIENT_ORIGIN}`, "http://localhost:5173", "https://smart-india-hackathon-25-frontend-n.vercel.app/"],
+    origin: [`${process.env.CLIENT_ORIGIN}`, "http://localhost:5173", "https://smart-india-hackathon-25-frontend-n.vercel.app"],
     credentials: true,
   })
 );
@@ -49,3 +49,7 @@ connectDb()
     console.error("Database connection failed", error);
     process.exit(1);
   });
+
+  app.get("/",(req,res)=>{
+    res.send("AgriScan backend")
+  })
