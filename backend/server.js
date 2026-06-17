@@ -1,14 +1,14 @@
-import "./config/env.js";
+import "./src/config/env.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import express from "express";
-import { connectDb } from "./config/db.js";
-import aiRoutes from "./routes/ai.js";
-import authRoutes from "./routes/auth.js";
-import dashboardRoutes from "./routes/dashboard.js";
-import historyRoutes from "./routes/history.js";
-import scanRoutes from "./routes/scans.js";
-import userRoutes from "./routes/users.js";
+import { connectDb } from "./src/config/db.js";
+import aiRoutes from "./src/routes/ai.js";
+import authRoutes from "./src/routes/auth.js";
+import dashboardRoutes from "./src/routes/dashboard.js";
+import historyRoutes from "./src/routes/history.js";
+import scanRoutes from "./src/routes/scans.js";
+import userRoutes from "./src/routes/users.js";
 const app = express();
 const port = process.env.PORT || 5000;
 
