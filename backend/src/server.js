@@ -14,7 +14,7 @@ const port = process.env.PORT || 5000;
 
 app.use(
   cors({
-    origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+    origin: [`${process.env.CLIENT_ORIGIN}`, "http://localhost:5173", "https://smart-india-hackathon-25-frontend-n.vercel.app/"],
     credentials: true,
   })
 );
